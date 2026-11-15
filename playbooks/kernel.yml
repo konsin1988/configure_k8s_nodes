@@ -1,0 +1,7 @@
+---
+- name: Configure sysctl and kernel modules in kubernetes nodes
+  hosts: all
+  become: true 
+
+  roles: 
+    - kernel

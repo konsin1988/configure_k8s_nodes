@@ -1,0 +1,42 @@
+---
+- name: Ensure kernel modules configuration directory exists
+  ansible.builtin.file:
+    path: /etc/modules-load.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure kernel modules to load at boot
+  ansible.builtin.copy:
+    dest: "{{ kernel_modules_file }}"
+    content: |
+      {% for module in kernel_modules %}
+      {{ module }}
+      {% endfor %}
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ kernel_modules }}"
+
+- name: Configure kubernetes sysctl parameters
+  ansible.builtin.copy:
+    dest: "{{ kernel_sysctl_file }}"
+    content: |
+      {% for item in kernel_sysctl_config %}
+      {{ item.name }} = {{ item.value }}
+      {% endfor %}
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply sysctl configuration
+  
+- name: Apply sysctl configuration
+  ansible.builtin.command:
+    cmd: sysctl --system
+  changed_when: false
