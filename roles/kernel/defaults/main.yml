@@ -1,0 +1,23 @@
+---
+# Kernel modules required by kubernetes
+kernel_modules:
+  - overlay
+  - br_netfilter
+
+# Kubernetes networking sysctl parameters
+kernel_sysctl_config:
+  - name: net.bridge.bridge-nf-call-iptables
+    value: "1"
+
+  - name: net.bridge.bridge-nf-call-ip6tables
+    value: "1"
+
+  - name: net.ipv4.ip_forward
+    value: "1"
+
+# Sysctl configuration file
+kernel_sysctl_file: /etc/sysctl.d/99-kubernetes.conf
+
+# Modules configuration file
+kernel_modules_file: /etc/modules-load.d/kubernetes.conf
+
