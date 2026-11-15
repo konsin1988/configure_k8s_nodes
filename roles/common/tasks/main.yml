@@ -1,0 +1,22 @@
+---
+- name: Configure timezone
+  community.general.timezone:
+    name: "{{ common_timezone }}"
+
+- name: Update package cache (Debian)
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Upgrade installed packages (Debian)
+  ansible.builtin.apt:
+    upgrade: dist
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - common_upgrade_packages | bool
+
+- name: Install common packages
+  ansible.builtin.package:
+    name: "{{ common_packages }}"
+    state: present

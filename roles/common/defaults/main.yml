@@ -1,0 +1,38 @@
+---
+common_hostname: clotho
+common_timezone: Etc/UTC
+
+common_packages:
+  # Networking
+  - curl
+  - wget
+  - dnsutils
+  - iproute2
+  - iputils-ping
+  - net-tools
+  - tcpdump
+  - traceroute
+
+  # System utilities
+  - git
+  - vim
+  - htop
+  - tmux
+  - jq
+  - unzip
+  - zip
+  - rsync
+  - lsof
+  - tree
+
+  # Security and certificates
+  - ca-certificates
+  - gnupg
+  - openssl
+
+  # System management
+  - chrony
+  - sudo
+  - apt-transport-https
+
+common_upgrade_packages: false
