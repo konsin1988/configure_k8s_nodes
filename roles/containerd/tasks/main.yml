@@ -1,0 +1,25 @@
+---
+- name: Configure containerd repository
+  ansible.builtin.import_tasks: repository.yml
+
+- name: Verify containerd package availability
+  ansible.builtin.import_tasks: version.yml
+
+#- name: Refresh APT cache
+#  ansible.builtin.apt:
+#    update_cache: true
+
+- name: Install containerd
+  ansible.builtin.import_tasks: install.yml
+
+- name: Configure containerd
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Apply containerd configuration changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Configure containerd service
+  ansible.builtin.import_tasks: service.yml
+
+- name: Validate containerd
+  ansible.builtin.import_tasks: validate.yml

@@ -1,0 +1,6 @@
+---
+- name: Ensure containerd is enabled and running 
+  ansible.builtin.systemd:
+    name: "{{ containerd_service }}"
+    state: "{{ containerd_service_state }}"
+    enabled: "{{ containerd_service_enabled }}"

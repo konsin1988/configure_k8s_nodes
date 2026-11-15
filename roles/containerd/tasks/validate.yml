@@ -1,0 +1,55 @@
+---
+- name: Get containerd version
+  ansible.builtin.command:
+    cmd: containerd --version
+  register: containerd_version_output
+  changed_when: false
+
+- name: Display containerd version
+  ansible.builtin.debug:
+    var: containerd_version_output.stdout
+
+- name: Check containerd service
+  ansible.builtin.command:
+    cmd: systemctl is-active containerd
+  register: containerd_service_status
+  changed_when: false
+  failed_when: containerd_service_status.stdout != "active"
+
+- name: Check containerd socket
+  ansible.builtin.stat:
+    path: "{{ containerd_cri_socket }}"
+  register: containerd_socket_status
+
+- name: Verify containerd socket exists
+  ansible.builtin.assert:
+    that:
+      - containerd_socket_status.stat.exists
+      - containerd_socket_status.stat.issock
+
+- name: Check containerd plugins
+  ansible.builtin.command:
+    cmd: ctr plugins ls
+  register: containerd_plugins
+  changed_when: false
+
+- name: Verify CRI plugins are loaded
+  ansible.builtin.assert:
+    that:
+      - containerd_plugins.stdout is search('io.containerd.cri.v1.runtime.*ok')
+      - containerd_plugins.stdout is search('io.containerd.cri.v1.images.*ok')
+      - containerd_plugins.stdout is search('io.containerd.grpc.v1.cri.*ok')
+    fail_msg: "One or more containerd CRI plugins are not ready"
+
+- name: Dump containerd conf
+  ansible.builtin.command:
+    cmd: containerd config dump
+  register: containerd_config_dump
+  changed_when: false
+
+- name: Verify containerd conf
+  ansible.builtin.assert:
+    that:
+      - containerd_config_dump.stdout is search('SystemdCgroup\\s*=\\s*true')
+      - containerd_config_dump.stdout is search(containerd_sandbox_image)
+

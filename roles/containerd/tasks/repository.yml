@@ -1,0 +1,57 @@
+---
+- name: Install repository dependencies
+  ansible.builtin.apt:
+    name: 
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: true
+
+- name: Create APT keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download Docker repository GPG key
+  ansible.builtin.get_url:
+    url: "{{ containerd_apt_key_url }}"
+    dest: "{{ containerd_apt_keyring }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+#- name: Configure Docker APT repository
+#  ansible.builtin.template:
+#    src: docker.source.j2
+#    dest: "{{ containerd_apt_source }}"
+#    owner: root
+#    group: root
+#    mode: "0644"
+#  register: containerd_repository
+
+- name: Configure Docker APT repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types:
+      - deb
+    uris:
+      - "{{ containerd_apt_repository }}"
+    suites:
+      - "{{ ansible_facts['distribution_release'] }}"
+    components:
+      - stable
+    architectures:
+      - "{{ containerd_architecture_map[ansible_facts['architecture']] }}"
+    signed_by: "{{ containerd_apt_keyring }}"
+    state: present
+    enabled: true
+  register: containerd_repository
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 0
+  when: containerd_repository.changed
