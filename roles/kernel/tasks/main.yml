@@ -36,7 +36,3 @@
     mode: "0644"
   notify: Apply sysctl configuration
   
-- name: Apply sysctl configuration
-  ansible.builtin.command:
-    cmd: sysctl --system
-  changed_when: false

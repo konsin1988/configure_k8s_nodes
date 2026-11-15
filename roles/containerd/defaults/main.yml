@@ -1,0 +1,33 @@
+---
+# Exact APT package version.
+# Set this after checking available repository versions.
+containerd_package: containerd.io
+containerd_package_version: "2.4.2-4~ubuntu.24.04~noble"
+
+# Repo configuration
+containerd_apt_repository: "https://download.docker.com/linux/ubuntu"
+containerd_apt_key_url: "https://download.docker.com/linux/ubuntu/gpg"
+containerd_apt_keyring: "/etc/apt/keyrings/docker.asc"
+containerd_apt_source: "/etc/apt/sources.list.d/docker.sources"
+
+# Containerd config
+containerd_config_file: /etc/containerd/config.toml
+containerd_config_version: 3
+containerd_cgroup_driver: systemd
+
+# Kubernetes sandbox image
+containerd_sandbox_image: "registry.k8s.io/pause:3.10.2"
+
+# Runtime
+containerd_service: containerd
+containerd_state: started
+containerd_service_enabled: true
+
+# CRI
+containerd_cri_socket: /run/containerd/containerd.sock
+
+# architecture_mapping
+containerd_architecture_map:
+  x86_64: amd64
+  aarch64: arm64
+

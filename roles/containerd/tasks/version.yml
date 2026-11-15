@@ -1,0 +1,14 @@
+---
+- name: Check available containerd package version
+  ansible.builtin.command:
+    cmd: apt-cache madison containerd.io
+  register: containerd_available_versions
+  changed_when: false
+
+- name: Verify pinned containerd version is available
+  ansible.builtin.assert:
+    that:
+      - containerd_available_versions.stdout is search(containerd_package_version)
+    fail_msg: >-
+      Required containerd version {{ containerd_package_version }}
+      is not available on {{ inventory_hostname }}.

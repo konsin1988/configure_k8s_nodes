@@ -1,0 +1,6 @@
+Types: deb
+URIs: {{ containerd_apt_repository }}
+Suites: {{ ansible_distribution_release }}
+Components: stable
+Architectures: {{ ansible_architecture_map[ansible_architecture] | default(ansible_architecture) }}
+Signed-By: {{ containerd_apt_keyring }}

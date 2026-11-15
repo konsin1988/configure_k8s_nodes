@@ -1,0 +1,44 @@
+---
+- name: Ensure containerd configuration directory exists
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Generate default containerd conf
+  ansible.builtin.shell:
+    cmd: containerd config default > {{ containerd_config_file }}
+    creates: "{{ containerd_config_file }}"
+
+- name: Verify containerd configuration version
+  ansible.builtin.command:
+    cmd: grep -E '^version = 3$' {{ containerd_config_file }}
+  changed_when: false
+
+
+- name: Ensure CRI plugin is enabled
+  ansible.builtin.lineinfile:
+    path: "{{ containerd_config_file }}"
+    regexp: '^disabled_plugins\s*='
+    line: 'disabled_plugins = []'
+    insertbefore: BOF
+    backup: true
+  notify: Restart containerd
+
+- name: Configure systemd cgroup driver
+  ansible.builtin.replace:
+    path: "{{ containerd_config_file }}"
+    regexp: '(?m)^(\s*SystemdCgroup\s*=\s*)false\s*$'
+    replace: '\1true'
+    backup: true
+  notify: Restart containerd
+
+- name: Configure k8s sandbox image
+  ansible.builtin.replace:
+    path: "{{ containerd_config_file }}"
+    regexp: '(?m)^(\s*sandbox\s*=\s*)[''"][^''"]+[''"]\s*$'
+    replace: "\\1'{{ containerd_sandbox_image }}'"
+    backup: true
+  notify: Restart containerd

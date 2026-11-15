@@ -1,0 +1,21 @@
+---
+- name: Validate containerd package version
+  ansible.builtin.assert:
+    that: 
+      - containerd_package_version | length > 0
+    fail_msg: >-
+      Set containerd_package_version to an exact version
+      available in the configured APT repository.
+
+- name: Install pinned containerd package
+  ansible.builtin.apt:
+    name: "{{ containerd_package }}={{ containerd_package_version }}"
+    state: present
+    update_cache: true
+    allow_downgrade: true 
+  notify: Restart containerd
+
+- name: Hold containerd package 
+  ansible.builtin.dpkg_selections:
+    name: "{{ containerd_package }}"
+    selection: hold
