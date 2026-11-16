@@ -20,8 +20,8 @@ containerd_sandbox_image: "registry.k8s.io/pause:3.10.2"
 
 # Runtime
 containerd_service: containerd
-containerd_state: started
 containerd_service_enabled: true
+containerd_service_state: started 
 
 # CRI
 containerd_cri_socket: /run/containerd/containerd.sock

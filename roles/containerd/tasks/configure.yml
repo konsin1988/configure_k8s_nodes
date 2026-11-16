@@ -8,15 +8,20 @@
     mode: "0755"
 
 - name: Generate default containerd conf
-  ansible.builtin.shell:
-    cmd: containerd config default > {{ containerd_config_file }}
-    creates: "{{ containerd_config_file }}"
-
-- name: Verify containerd configuration version
   ansible.builtin.command:
-    cmd: grep -E '^version = 3$' {{ containerd_config_file }}
+    cmd: containerd config default 
+  register: containerd_default_config
   changed_when: false
 
+- name: Install default containerd configuration
+  ansible.builtin.copy:
+    content: "{{ containerd_default_config.stdout }}\n"
+    dest: "{{ containerd_config_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify: Restart containerd
 
 - name: Ensure CRI plugin is enabled
   ansible.builtin.lineinfile:
