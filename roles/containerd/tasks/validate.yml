@@ -36,9 +36,9 @@
 - name: Verify CRI plugins are loaded
   ansible.builtin.assert:
     that:
-      - containerd_plugins.stdout is search('io.containerd.cri.v1.runtime.*ok')
-      - containerd_plugins.stdout is search('io.containerd.cri.v1.images.*ok')
-      - containerd_plugins.stdout is search('io.containerd.grpc.v1.cri.*ok')
+      - containerd_plugins.stdout is search('io.containerd.cri.v1\s+images\s+.*ok')
+      - containerd_plugins.stdout is search('io.containerd.cri.v1\s+runtime\s+.*ok')
+      - containerd_plugins.stdout is search('io.containerd.grpc.v1\s+cri\s+.*ok')
     fail_msg: "One or more containerd CRI plugins are not ready"
 
 - name: Dump containerd conf
