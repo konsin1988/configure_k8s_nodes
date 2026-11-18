@@ -1,0 +1,22 @@
+---
+- name: Validate supported operating system
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts['os_family'] in ['Debian', 'RedHat']
+    fail_msg: "Unsupported OS family: {{ ansible_facts['os_family']}}"
+
+- name: Validate CA certs filenames
+  ansible.builtin.assert:
+    that: 
+      - item is match('^[a-zA-Z0-9_.-]+\.crt$')
+    fail_msg: "Invalid CA cert filename: {{ item }}"
+  loop: "{{ ca_certs_trusted }}"
+  when: ca_certs_trusted | length > 0
+
+- name: Configure CA certs on Debian 
+  ansible.builtin.import_tasks: debian.yml
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Configure CA certs on RedHat
+  ansible.builtin.import_tasks: redhat.yml
+  when: ansible_facts['os_family'] == 'RedHat'
