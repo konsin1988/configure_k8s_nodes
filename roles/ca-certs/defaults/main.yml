@@ -1,0 +1,6 @@
+---
+ca_certs_trusted: []
+
+ca_certs_owner: root
+ca_certs_group: root
+ca_certs_mode: "0644"

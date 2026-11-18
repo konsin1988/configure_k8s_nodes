@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  role_name: ca_certificates
+  author: your_name
+  description: Manage system-wide trusted CA certificates
+  license: MIT
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+    - name: EL
+      versions:
+        - "9"
+        - "10"
+
+dependencies: []

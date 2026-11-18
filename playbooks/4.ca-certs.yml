@@ -1,0 +1,7 @@
+---
+- name: Configure ca-certificates on Kubernetes nodes
+  hosts: kubernetes 
+  become: true
+
+  roles:
+    - ca-certs 

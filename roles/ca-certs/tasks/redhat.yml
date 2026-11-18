@@ -1,0 +1,28 @@
+---
+- name: Install CA certs package
+  ansible.builtin.package:
+    name: ca-certificates
+    state: present
+
+- name: Ensure CA trust is enabled
+  ansible.builtin.command:
+    cmd: update-ca-trust force-enable
+  changed_when: false
+
+- name: Create CA certs directory
+  ansible.builtin.file:
+    path: /etc/pki/ca-trust/source/anchors
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Distribute trusted CA certs
+  ansible.builtin.copy:
+    src: "ca/{{ item }}"
+    dest: "/etc/pki/ca-trust/source/anchors/{{ item }}"
+    owner: "{{ ca_certs_owner }}"
+    group: "{{ ca_certs_group }}"
+    mode: "{{ ca_certs_mode }}"
+  loop: "{{ ca_certs_trusted }}"
+  notify: Update RedHat CA certs

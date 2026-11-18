@@ -1,0 +1,23 @@
+---
+- name: Install CA certs package 
+  ansible.builtin.apt:
+    name: ca-certificates
+    state: present
+
+- name: Create CA certs dir
+  ansible.builtin.file:
+    path: /usr/local/share/ca-certificates
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Distribute trusted CA certs
+  ansible.builtin.copy:
+    src: "ca/{{ item }}"
+    dest: "/usr/local/share/ca-certificates/{{ item }}"
+    owner: "{{ ca_certs_owner }}"
+    group: "{{ ca_certs_group}}"
+    mode: "{{ ca_certs_mode }}"
+  loop: "{{ ca_certs_trusted }}"
+  notify: Update Debian CA certs
