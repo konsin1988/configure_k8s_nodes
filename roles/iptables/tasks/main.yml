@@ -1,0 +1,152 @@
+---
+- name: Disable and mask ufw service
+  ansible.builtin.systemd_service:
+    name: ufw
+    state: stopped 
+    enable: false
+    masked: true
+  failed_when: false
+
+
+- name: Pre-seed debconf for iptables-persistent (prevent apt prompt hang)
+  ansible.builtin.debconf:
+    name: iptables-persistent
+    question: "{{ item }}"
+    value: "true"
+    vtype: boolean
+  loop:
+    - iptables-persistent/autosave_v4
+    - iptables-persistent/autosave_v6
+
+- name: Install iptables-persistent
+  ansible.builtin.apt:
+    name:
+      - iptables
+      - iptables-persistent
+      - netfilter-persistent
+    state: present
+    update_cache: true
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Ensure iptables-nft backend is active 
+  community.general.alternatives:
+    name: iptables
+    path: /usr/sbin/iptables-nft
+
+
+- name: Allow loopback traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+  notify: Save iptables rules
+
+- name: Allow established and related connections
+  ansible.builtin.iptables:
+    chain: INPUT
+    ctstate: 
+      - ESTABLISHED
+      - RELATED
+    jump: ACCEPT
+  notify: Save iptables rules
+
+- name: Allow SSH access
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "22"
+    source: "{{ iptables_ssh_allowed_cidr }}"
+    jump: ACCEPT
+  notify: Save iptables rules
+
+- name: Allow intra-cluster node communication (CNI / VXLAN / BGP)
+  ansible.builtin.iptables:
+    chain: INPUT 
+    source: "{{ iptables_cluster_cidr }}"
+    jump: ACCEPT 
+  notify: Save iptables rules
+
+- name: Allow Calico BGP (TCP 179) between cluster nodes
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "179"
+    source: "{{ iptables_cluster_cidr }}"
+    jump: ACCEPT
+  when: calico_encapsulation_mode in ['bgp', 'ipip']
+  notify: Save iptables rules
+
+- name: Allow Calico IP-in-IP between cluster nodes
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: "4"
+    source: "{{ iptables_cluster_cidr }}"
+    jump: ACCEPT 
+  when: calico_encapsulation_mode == 'ipip'
+  notify: Save iptables rules
+
+- name: Allow Calico VXLAN (udp 4789) between cluster nodes
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: "4789"
+    source: "{{ iptables_cluster_cidr }}"
+    jump: ACCEPT
+  when: calico_encapsulation_mode == 'vxlan'
+  notify: Save iptables rules
+
+- name: Allow traffic from Calico pod interfaces (cali+ and tunl0/vxlan.calico)
+  ansible.builtin.iptables: 
+    chain: INPUT
+    in_interface: "{{ item }}"
+    jump: ACCEPT
+  loop:
+    - "cali+"
+    - "tunl0"
+    - "vxlan.calico"
+  notify: Save iptables rules
+
+- name: Open common k8s tcp ports
+  ansible.builtin.iptables:
+    chain: INPUT 
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ iptables_common_tcp_ports }}"
+  notify: Save iptables rules
+
+- name: Open Control Plane tcp ports
+  ansible.builtin.iptables:
+    chain: INPUT 
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ iptables_control_plane_tcp_ports }}"
+  when: iptables_is_control_plane
+  notify: Save iptables rules
+
+- name: Open Worker NodePort range
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp 
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ iptables_worker_tcp_ports }}"
+  when: not iptables_is_control_plane
+  notify: Save iptables rules
+
+- name: Allow outbound connections to Container Registry (HTTPS / Custom port)
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: tcp
+    destination: "{{ item.0 }}"
+    destination_port: "{{ item.1 }}"
+    jump: ACCEPT 
+  loop: "{{ iptables_registry_cidr | product(['443', '5000']) | list }}"
+  notify: Save iptables rules
+
+- name: Ensure FORWARD chain policy is ACCEPT (k8s pods)
+  ansible.builtin.iptables:
+    chain: FORWARD 
+    policy: ACCEPT
+  notify: Save iptables rules

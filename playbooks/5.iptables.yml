@@ -1,0 +1,7 @@
+---
+- name: Configure iptables 
+  hosts: kubernetes 
+  become: true
+
+  roles:
+    - iptables 
