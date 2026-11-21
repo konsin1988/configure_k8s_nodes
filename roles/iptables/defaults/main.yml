@@ -1,0 +1,26 @@
+---
+iptables_ssh_allowed_cidr: "0.0.0.0/0"
+iptables_cluster_cidr: "10.0.0.0/8"
+iptables_pod_cidr: "192.168.0.0/16"    # Default Calico pod CIDR
+
+iptables_registry_cidr:
+  - "192.168.3.2/32"
+  - "0.0.0.0/0"
+
+# Calico networking mode: 'ipip', 'vxlan', or 'bgp'
+calico_encapsulation_mode: "vxlan"
+
+iptables_is_control_plane: "{{ 'control_plane' in group_names }}"
+
+iptables_common_tcp_ports:
+  - 10520  # kubelet
+  
+iptables_control_plane_tcp_ports: 
+  - 6443      # Api server
+  - 2379      # etcd
+  - 2380      # etcd
+  - 10257     # kube-controller-manager
+  - 10259     # kube-scheduler
+
+iptables_worker_tcp_ports:
+  - "30000:32767"     # NodePorts

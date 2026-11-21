@@ -15,6 +15,12 @@ kernel_sysctl_config:
   - name: net.ipv4.ip_forward
     value: "1"
 
+  - name: net.ipv4.conf.all.rp_filter
+    value: "2"
+
+  - name: net.ipv4.conf.default.rp_filter
+    value: "2"
+
 # Sysctl configuration file
 kernel_sysctl_file: /etc/sysctl.d/99-kubernetes.conf
 
