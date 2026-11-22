@@ -1,0 +1,42 @@
+---
+- name: Install repository dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gpg
+    state: present
+    update_cache: true
+
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Download k8s repository signing key
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/Release.key"
+    dest: "{{ kubernetes_apt_keyring }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configure k8s apt reposigory
+  ansible.builtin.deb822_repository:
+    name: kubernetes
+    types: 
+      - deb
+    uris: 
+      - "https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/" 
+    suites:
+      - /
+    signed_by: "{{ kubernetes_apt_keyring }}"
+    state: present
+  register: kubernetes_repository
+
+- name: Update apt cache after repository configuration
+  ansible.builtin.apt:
+    update_cache: true
+  when: kubernetes_repository.changed

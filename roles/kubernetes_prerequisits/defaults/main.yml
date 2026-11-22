@@ -1,0 +1,16 @@
+---
+kubernetes_version: "1.37"
+
+kubernetes_packages:
+  - kubelet
+  - kubeadm
+  - kubectl
+
+kubernetes_package_state: present
+kubernetes_package_hold: true
+
+kubernetes_apt_keyring: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+kubernetes_apt_repo_file: /etc/apt/source.list.d/kubernetes.list
+
+kubelet_service_enabled: true
+kubelet_service_state:  started

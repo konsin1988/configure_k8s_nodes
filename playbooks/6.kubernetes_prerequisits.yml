@@ -1,0 +1,7 @@
+---
+- name: Configure k8s prerequisits 
+  hosts: kubernetes 
+  become: true
+
+  roles:
+    - kubernetes_prerequisits
