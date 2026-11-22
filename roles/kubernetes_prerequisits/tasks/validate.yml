@@ -1,0 +1,16 @@
+---
+- name: Validate operating system
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts['distribution'] == "Ubuntu"
+      - ansible_facts['architecture'] == "x86_64"
+    fail_msg: >
+      Kubernetes prerequisites role supports Ubuntu on amd64 architecture.
+
+- name: Validate k8s version format
+  ansible.builtin.assert: 
+    that:
+      - kubernetes_version is match('^[0-9]+\.[0-9]+$')
+    fail_msg: >
+      kubernetes_version must contain a major and minor version, 
+      for example 1.37.

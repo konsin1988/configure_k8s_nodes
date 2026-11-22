@@ -1,0 +1,7 @@
+---
+- name: Enable and start kubelet
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: "{{ kubelet_service_enabled }}"
+    state: "{{ kubelet_service_state }}"
+    daemon_reload: true

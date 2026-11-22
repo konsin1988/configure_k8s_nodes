@@ -1,0 +1,15 @@
+---
+- name: Validate system requirements
+  ansible.builtin.import_tasks: validate.yml
+
+- name: Configure k8s repository
+  ansible.builtin.import_tasks: repository.yml
+
+- name: Install k8s packages
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Configure kubelet
+  ansible.builtin.import_tasks: kubelet.yml
+
+- name: Verify k8s installation
+  ansible.builtin.import_tasks: verify.yml
