@@ -1,0 +1,37 @@
+global_defs {
+    router_id {{ inventory_hostname }}
+    enable_script_security
+    script_user root
+}
+
+vrrp_script check_haproxy {
+    script "/usr/bin/systemctl is-active --quiet haproxy"
+    interval {{ keepalived_check_interval }}
+    fall {{ keepalived_check_fall }}
+    rise {{ keepalived_check_rise }}
+    weight {{ keepalived_check_weight }}
+}
+
+vrrp_instance VI_KUBERNETES {
+    state BACKUP
+    interface {{ keepalived_interface }}
+    virtual_router_id {{ keepalived_router_id }}
+    priority {{ keepalived_priority }}
+    advert_int {{ keepalived_advert_interval }}
+
+    unicast_src_ip {{ kubernetes_node_ip }}
+
+    unicast_peer {
+{% for host in groups['kube_control_plane'] if host != inventory_hostname %}
+        {{ hostvars[host].kubernetes_node_ip }}
+{% endfor %}
+    }
+
+    virtual_ipaddress {
+        {{ kubernetes_api_vip }}/{{ kubernetes_api_vip_cidr }} dev {{ keepalived_interface }}
+    }
+
+    track_script {
+        check_haproxy
+    }
+}

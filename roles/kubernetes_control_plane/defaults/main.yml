@@ -1,0 +1,41 @@
+#---
+#kubernetes_pod_subnet: "10.244.0.0/16"
+#
+#kubernetes_service_subnet: "10.96.0.0/12"
+#
+#kubernetes_cluster_name: "kubernetes"
+#
+#kubernetes_control_plane_endpoint: ""
+#
+#kubernetes_kubeconfig_user: "{{ ansible_user }}"
+#
+#kubernetes_kubeconfig_group: "{{ ansible_user }}"
+#
+#
+---
+# Kubernetes version must match the installed kubeadm version.
+kubernetes_version: "v1.37"
+
+# Kubernetes API endpoint (load balancer or virtual IP).
+kubernetes_control_plane_endpoint: "192.168.3.7:6443"
+
+# API server certificate SANs.
+kubernetes_api_server_cert_sans:
+  - "192.168.3.7"
+
+# Kubernetes networking.
+kubernetes_pod_subnet: "192.168.0.0/16"
+kubernetes_service_subnet: "10.96.0.0/12"
+
+# Container runtime.
+kubernetes_cri_socket: "unix:///run/containerd/containerd.sock"
+
+# kubeadm configuration API.
+kubernetes_kubeadm_api_version: "kubeadm.k8s.io/v1beta4"
+
+# Bootstrap credentials.
+kubernetes_bootstrap_token_ttl: "2h"
+kubernetes_certificate_key: ""
+
+# API server.
+kubernetes_api_server_port: 6443

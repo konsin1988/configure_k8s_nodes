@@ -17,15 +17,19 @@
   register: kubectl_version_output
   changed_when: false 
 
-- name: Verify k8s component versions
+- name: Verify Kubernetes component versions
   ansible.builtin.assert:
-    that: 
-      - "kubelet_version_output.stdout is search('v' ~ kubernetes_version ~ '\\.')"
-      - "kubeadm_version_output.stdout is search('v' ~ kubernetes_version ~ '\\.')"
-      - "kubectl_version_output.stdout is search('v' ~ kubernetes_version ~ '\\.')"
-    fail_msg: >
-      Installed k8s component versions do not match
-      the required minor verion {{ kubernetes_version }}.
+    that:
+      - kubelet_version_output.stdout is search(version_pattern)
+      - kubeadm_version_output.stdout is search(version_pattern)
+      - kubectl_version_output.stdout is search(version_pattern)
+    fail_msg: >-
+      Installed Kubernetes component versions do not match
+      the required minor version {{ kubernetes_version }}.
+    success_msg: >-
+      All Kubernetes components match minor version {{ kubernetes_version }}.
+  vars:
+    version_pattern: 'v{{ kubernetes_version | regex_escape }}\.'
 
 - name: Display installed k8s versions
   ansible.builtin.debug:
