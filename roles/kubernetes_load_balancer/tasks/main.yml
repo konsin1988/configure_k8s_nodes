@@ -1,0 +1,98 @@
+---
+- name: Validate load balancer configuration
+  ansible.builtin.assert:
+    that:
+      - groups['kube_control_plane'] | length >= keepalived_minimum_nodes
+      - kubernetes_api_vip is defined
+      - kubernetes_node_ip is defined
+      - keepalived_interface is defined
+      - keepalived_priority is defined
+      - keepalived_priority | int >= 1
+      - keepalived_priority | int <= 254
+    fail_msg: "Missing or invalid load balancer configuration for {{ inventory_hostname }}"
+
+- name: Validate network interface exists
+  ansible.builtin.assert:
+    that:
+      - keepalived_interface in ansible_facts['interfaces']
+    fail_msg: "Interface {{ keepalived_interface }} does not exist on {{ inventory_hostname }}"
+
+- name: Validate node IP is assigned locally
+  ansible.builtin.assert:
+    that:
+      - kubernetes_node_ip in ansible_facts['all_ipv4_addresses']
+    fail_msg: "{{ kubernetes_node_ip }} is not assigned to {{ inventory_hostname }}"
+
+- name: Install HAProxy and Keepalived 
+  ansible.builtin.apt:
+    name: 
+      - haproxy
+      - keepalived
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Allow binding to non-local IP addresses
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: "1"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-kubernetes-load-balancer.conf
+    reload: true
+
+- name: Configure HAProxy
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "haproxy -c -f %s"
+  notify: Restart HAProxy
+
+- name: Configure Keepalived
+  ansible.builtin.template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: "0640"
+  notify: Restart Keepalived
+
+- name: Enable and start Keepalived
+  ansible.builtin.systemd:
+    name: keepalived
+    enabled: true
+    state: started
+
+- name: Enable and start HAProxy
+  ansible.builtin.systemd:
+    name: haproxy
+    enabled: true
+    state: started
+
+# 8. Restart HAProxy after VIP is available
+- name: Restart HAProxy after VIP is available
+  ansible.builtin.systemd:
+    name: haproxy
+    state: restarted
+
+- name: Check API VIP assignment
+  ansible.builtin.command:
+    argv:
+      - ip
+      - -4
+      - addr
+      - show
+      - dev
+      - "{{ keepalived_interface }}"
+  register: vip_check
+  changed_when: false
+
+- name: Report API VIP ownership
+  ansible.builtin.debug:
+    msg: "{{ inventory_hostname }} owns {{ kubernetes_api_vip }}"
+  when: kubernetes_api_vip in vip_check.stdout
+
+- name: Apply pending service restarted 
+  ansible.builtin.meta: flush_handlers

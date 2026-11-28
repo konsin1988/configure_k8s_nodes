@@ -1,0 +1,7 @@
+---
+- name: Configure k8s control-plane nodes 
+  hosts: control_plane 
+  become: true
+
+  roles:
+    - kubernetes_control_plane

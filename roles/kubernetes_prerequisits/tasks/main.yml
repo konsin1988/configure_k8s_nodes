@@ -2,6 +2,9 @@
 - name: Validate system requirements
   ansible.builtin.import_tasks: validate.yml
 
+- name: Disable swap
+  ansible.builtin.import_tasks: swap.yml
+
 - name: Configure k8s repository
   ansible.builtin.import_tasks: repository.yml
 
